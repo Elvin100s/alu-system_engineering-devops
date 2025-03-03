@@ -11,11 +11,29 @@ sudo cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.h
 
 # Create a new index file with the required content
 echo -e "Creating new index file with 'Holberton School'. \n"
-echo -e "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+echo -e "Holberton School" | sudo tee /var/www/html/index.html > /dev/null
 
 # Restart Nginx without using systemctl
 echo -e "\nRestarting Nginx. \n"
 sudo service nginx restart
+
+# Allow Nginx on the firewall
+echo -e "\nAllowing Nginx on the firewall. \n"
+sudo ufw allow 'Nginx HTTP'
+
+# Verify the configuration
+echo -e "\nVerifying the configuration. \n"
+curl_output=$(curl -s localhost)
+if [[ "$curl_output" == "Holberton School" ]]; then
+  echo -e "Nginx is installed on your web01 server and accepting traffic on port 80."
+  echo -e "Nginx returns at its root / a page that contains Holberton School."
+else
+  echo -e "Nginx configuration verification failed. Output does not contain 'Holberton School'."
+  exit 1
+fi
+
+echo -e "\nCompleted. Nginx is installed and configured to serve 'Holberton School'."
+
 
 # Allow Nginx on the firewall
 echo -e "\nAllowing Nginx on the firewall. \n"
