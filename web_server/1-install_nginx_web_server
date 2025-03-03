@@ -2,41 +2,30 @@
 # Configures a new Ubuntu machine by installing Nginx and setting it up to serve a page with "Holberton School"
 
 # Update and install Nginx
-echo -e "Updating and installing Nginx. \n"
-sudo apt-get update -y -qq && sudo apt-get install nginx -y
+sudo apt-get update -y
+sudo apt-get install nginx -y
 
-# Backup default index file
-echo -e "\nBacking up the default index file. \n"
+# Backup default index file (optional but recommended for safety)
 sudo cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
 
 # Create a new index file with the required content
-echo -e "Creating new index file with 'Holberton School'. \n"
-echo -e "Holberton School" | sudo tee /var/www/html/index.html > /dev/null
+echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
 
 # Restart Nginx without using systemctl
-echo -e "\nRestarting Nginx. \n"
 sudo service nginx restart
 
-# Allow Nginx on the firewall
-echo -e "\nAllowing Nginx on the firewall. \n"
+# Configure firewall to allow Nginx and OpenSSH
+sudo ufw enable
 sudo ufw allow 'Nginx HTTP'
+sudo ufw allow 'OpenSSH'
 
 # Verify the configuration
-echo -e "\nVerifying the configuration. \n"
 curl_output=$(curl -s localhost)
-if [[ "$curl_output" == "Holberton School" ]]; then
-  echo -e "Nginx is installed on your web01 server and accepting traffic on port 80."
-  echo -e "Nginx returns at its root / a page that contains Holberton School."
+if [[ "$curl_output" == "Holberton School for the win!" ]]; then
+  echo "Nginx is installed and serving the correct content."
 else
-  echo -e "Nginx configuration verification failed. Output does not contain 'Holberton School'."
+  echo "Nginx configuration verification failed. Output does not contain 'Holberton School for the win!'."
   exit 1
 fi
 
-echo -e "\nCompleted. Nginx is installed and configured to serve 'Holberton School'."
-
-
-# Allow Nginx on the firewall
-echo -e "\nAllowing Nginx on the firewall. \n"
-sudo ufw allow 'Nginx HTTP'
-
-echo -e "\nCompleted. Nginx is installed and configured to serve 'Holberton School for the win!'."
+echo "Completed. Nginx is installed and configured to serve 'Holberton School for the win!'."
