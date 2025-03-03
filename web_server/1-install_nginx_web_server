@@ -9,7 +9,7 @@ sudo apt-get install nginx -y
 sudo cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
 
 # Create a new index file with the required content
-echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+echo "Holberton School" | sudo tee /var/www/html/index.html > /dev/null
 
 # Restart Nginx without using systemctl
 sudo service nginx restart
@@ -21,11 +21,12 @@ sudo ufw allow 'OpenSSH'
 
 # Verify the configuration
 curl_output=$(curl -s localhost)
-if [[ "$curl_output" == "Holberton School for the win!" ]]; then
-  echo "Nginx is installed and serving the correct content."
+if [[ "$curl_output" == "Holberton School" ]]; then
+  echo "Nginx is installed on your web01 server and accepting traffic on port 80."
+  echo "Nginx returns at its root / a page that contains Holberton School."
 else
-  echo "Nginx configuration verification failed. Output does not contain 'Holberton School for the win!'."
+  echo "Nginx configuration verification failed. Output does not contain 'Holberton School'."
   exit 1
 fi
 
-echo "Completed. Nginx is installed and configured to serve 'Holberton School for the win!'."
+echo "Completed. Nginx is installed and configured to serve 'Holberton School'."
