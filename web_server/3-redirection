@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
 # Script that configures a new Ubuntu machine with the following requirements:
 
-# Update and install Nginx
 sudo apt-get update
 sudo apt-get -y install nginx
-
-# Allow Nginx HTTP traffic
 sudo ufw allow 'Nginx HTTP'
+echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
-# Create the custom 404 page
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
+string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
+sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
-# Modify the Nginx configuration to use the custom 404 page
-sudo sed -i '/server_name _;/a \\terror_page 404 /404.html;\n\tlocation = /404.html {\n\t\tinternal;\n\t}' /etc/nginx/sites-available/default
-
-# Restart Nginx
 sudo service nginx restart
