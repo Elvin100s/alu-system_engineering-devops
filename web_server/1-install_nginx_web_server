@@ -1,8 +1,24 @@
 #!/usr/bin/env bash
-# Installs nginx server
+# Configures a new Ubuntu machine by installing Nginx and setting it up to serve a page with "Holberton School"
 
-sudo apt-get update
-sudo apt-get -y install nginx
+# Update and install Nginx
+echo -e "Updating and installing Nginx. \n"
+sudo apt-get update -y -qq && sudo apt-get install nginx -y
+
+# Backup default index file
+echo -e "\nBacking up the default index file. \n"
+sudo cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
+
+# Create a new index file with the required content
+echo -e "Creating new index file with 'Holberton School'. \n"
+echo -e "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+
+# Restart Nginx without using systemctl
+echo -e "\nRestarting Nginx. \n"
+sudo service nginx restart
+
+# Allow Nginx on the firewall
+echo -e "\nAllowing Nginx on the firewall. \n"
 sudo ufw allow 'Nginx HTTP'
-sudo echo "This is Elvin from Holberton School :)" > /var/www/html/index.html
-sudo service nginx start
+
+echo -e "\nCompleted. Nginx is installed and configured to serve 'Holberton School for the win!'."
