@@ -1,43 +1,35 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine with a custom 404 page and /redirect_404 redirection in Nginx.
-
-# Ensure the script is run as root
-if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root or with sudo." >&2
-    exit 1
-fi
+# Script that configures a new Ubuntu machine with a custom 404 page and /redirect_me redirection in Nginx.
 
 # Update the package list and install Nginx
-apt-get update
-apt-get -y install nginx
+sudo apt-get update
+sudo apt-get -y install nginx
 
 # Allow Nginx HTTP traffic through the firewall
-if command -v ufw >/dev/null 2>&1; then
-    ufw allow 'Nginx HTTP'
+if command -v ufw &> /dev/null; then
+    sudo ufw allow 'Nginx HTTP'
 else
     echo "UFW is not installed or not available. Skipping UFW configuration."
 fi
 
 # Create a custom 404 page
-cat <<EOF | tee /var/www/html/custom_404.html >/dev/null
-<html>
+echo "<html>
 <head><title>404 Not Found</title></head>
 <body>
 <h1>404 Not Found</h1>
 <p>ceci n'est pas</p>
 </body>
-</html>
-EOF
+</html>" | sudo tee /var/www/html/custom_404.html > /dev/null
 
-# Configure Nginx to use the custom 404 page and redirect /redirect_404
-sed -i '/^server {/,/^}/ {
-    /^server {/a \
-    \terror_page 404 /custom_404.html;\
-    \tlocation = /custom_404.html {\
-    \t\tinternal;\
-    \t}\
-    \trewrite ^/redirect_404 https://www.github.com/Elvin100s permanent;
+# Configure Nginx to use the custom 404 page and redirect /redirect_me
+sudo sed -i '/^server {/,/^}/ {
+/^server {/a \
+    error_page 404 /custom_404.html;\
+    location = /custom_404.html {\
+        internal;\
+    }\
+    rewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
 }' /etc/nginx/sites-enabled/default
 
 # Restart Nginx to apply the changes
-service nginx restart
+sudo service nginx restart
