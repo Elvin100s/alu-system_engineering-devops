@@ -21,6 +21,10 @@ echo "<html>
 </body>
 </html>" | sudo tee /var/www/html/custom_404.html > /dev/null
 
+# Set correct permissions for the custom 404 page
+sudo chmod 644 /var/www/html/custom_404.html
+sudo chown www-data:www-data /var/www/html/custom_404.html
+
 # Configure Nginx to use the custom 404 page
 sudo sed -i '/^error_page 404 /d' /etc/nginx/sites-enabled/default
 echo "error_page 404 /custom_404.html;" | sudo tee -a /etc/nginx/sites-enabled/default > /dev/null
