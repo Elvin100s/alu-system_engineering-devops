@@ -1,15 +1,70 @@
 #!/usr/bin/env bash
-# Configure Nginx server to redirect /redirect_me with a 301 Moved Permanently status
+# Configure Nginx server to redirect /redirect_me with exactly 301 Moved Permanently
 
-# Update package list and install Nginx
-sudo apt-get update
-sudo apt-get install -y nginx
+# Ensure root privileges
+if [[ "$EUID" -ne 0 ]]; then
+   echo "Please run as root or use sudo" >&2
+   exit 1
+fi
 
-# Modify the existing Nginx default configuration
-sudo sed -i '/server_name _;/a \    location = /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }' /etc/nginx/sites-available/default
+# Update package lists
+apt-get update -y
 
-# Test Nginx configuration
-sudo nginx -t
+# Install Nginx
+apt-get install -y nginx
 
-# Restart Nginx to apply changes
-sudo systemctl restart nginx
+# Stop Nginx
+systemctl stop nginx || true
+
+# Remove default configurations
+rm -f /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-available/default
+
+# Create precise Nginx configuration for exact 301 redirect
+tee /etc/nginx/sites-available/precise_redirect <<'EOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    
+    server_name _;
+    
+    # Precise redirect for /redirect_me
+    location = /redirect_me {
+        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
+    }
+}
+EOF
+
+# Enable the configuration
+ln -sf /etc/nginx/sites-available/precise_redirect /etc/nginx/sites-enabled/
+
+# Create basic 404 page with exact length requirement
+mkdir -p /var/www/html
+tee /var/www/html/404.html <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>404</title>
+</head>
+<body>
+    <h1>Ceci n'est pas une page</h1>
+</body>
+</html>
+EOF
+
+# Set correct permissions
+chown -R www-data:www-data /var/www/html
+chmod -R 755 /var/www/html
+
+# Verify Nginx configuration
+if ! nginx -t; then
+    echo "Nginx configuration test failed" >&2
+    exit 1
+fi
+
+# Restart and enable Nginx
+systemctl restart nginx
+systemctl enable nginx
+
+echo "Ubuntu machine configured with precise redirection"
