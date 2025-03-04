@@ -1,70 +1,104 @@
 #!/usr/bin/env bash
-# Configure Nginx server to redirect /redirect_me with exactly 301 Moved Permanently
+# Script to configure a new Ubuntu machine with Nginx and specific redirection
 
-# Ensure root privileges
-if [[ "$EUID" -ne 0 ]]; then
-   echo "Please run as root or use sudo" >&2
-   exit 1
-fi
+# Exit immediately if a command exits with a non-zero status
+set -e
 
-# Update package lists
-apt-get update -y
+# Update package lists and upgrade existing packages
+sudo apt-get update -y
+sudo apt-get upgrade -y
 
-# Install Nginx
-apt-get install -y nginx
+# Install essential packages
+sudo apt-get install -y \
+    nginx \
+    curl \
+    wget \
+    software-properties-common \
+    git \
+    vim
 
-# Stop Nginx
-systemctl stop nginx || true
+# Ensure Nginx is stopped before configuration
+sudo systemctl stop nginx
 
-# Remove default configurations
-rm -f /etc/nginx/sites-enabled/default
-rm -f /etc/nginx/sites-available/default
+# Remove default Nginx configuration
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/sites-available/default
 
-# Create precise Nginx configuration for exact 301 redirect
-tee /etc/nginx/sites-available/precise_redirect <<'EOF'
+# Create a new Nginx server block configuration
+sudo tee /etc/nginx/sites-available/custom_redirect <<EOF
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     
     server_name _;
     
-    # Precise redirect for /redirect_me
-    location = /redirect_me {
+    # Custom 404 page
+    error_page 404 /404.html;
+    location = /404.html {
+        root /var/www/html;
+        internal;
+    }
+    
+    # Redirect location
+    location /redirect_me {
         return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
     }
 }
 EOF
 
-# Enable the configuration
-ln -sf /etc/nginx/sites-available/precise_redirect /etc/nginx/sites-enabled/
+# Enable the new configuration
+sudo ln -s /etc/nginx/sites-available/custom_redirect /etc/nginx/sites-enabled/
 
-# Create basic 404 page with exact length requirement
-mkdir -p /var/www/html
-tee /var/www/html/404.html <<'EOF'
+# Create a custom 404 page
+sudo mkdir -p /var/www/html
+sudo tee /var/www/html/404.html <<EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>404</title>
+    <title>404 - Page Not Found</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 { color: #ff6f61; }
+        p { color: #333; }
+    </style>
 </head>
 <body>
-    <h1>Ceci n'est pas une page</h1>
+    <div class="container">
+        <h1>404 - Page Not Found</h1>
+        <p>Ceci n'est pas une page</p>
+        <p>The page you are looking for might have been removed or is temporarily unavailable.</p>
+    </div>
 </body>
 </html>
 EOF
 
 # Set correct permissions
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
+sudo chown -R www-data:www-data /var/www/html
+sudo chmod -R 755 /var/www/html
 
-# Verify Nginx configuration
-if ! nginx -t; then
-    echo "Nginx configuration test failed" >&2
-    exit 1
-fi
+# Test Nginx configuration
+sudo nginx -t
 
-# Restart and enable Nginx
-systemctl restart nginx
-systemctl enable nginx
+# Restart Nginx to apply changes
+sudo systemctl restart nginx
 
-echo "Ubuntu machine configured with precise redirection"
+# Enable Nginx to start on boot
+sudo systemctl enable nginx
+
+# Print confirmation message
+echo "Ubuntu machine configuration complete!"
+echo "Nginx is configured with custom redirect and 404 page."
