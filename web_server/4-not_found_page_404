@@ -1,27 +1,24 @@
 #!/usr/bin/env bash
-# This script configures a new Ubuntu machine to serve a custom 404 page with the string "Ceci n'est pas une page".
+# Script that configures a new Ubuntu machine with the following requirements:
 
-# Update package list and install Nginx
+# Update the package list and install Nginx
 sudo apt-get update
 sudo apt-get -y install nginx
 
-# Allow Nginx HTTP through the firewall
+# Allow Nginx HTTP traffic through the firewall
 sudo ufw allow 'Nginx HTTP'
 
-# Create the custom 404 error page
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
+# Create a custom index.html file
+echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
-# Set correct permissions for the 404 page
-sudo chmod 644 /var/www/html/404.html
+# Define the replacement string for the Nginx configuration
+string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
 
-# Backup the original Nginx configuration file
-sudo cp /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
+# Use sed to replace the line in the Nginx default configuration file
+sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
-# Configure Nginx to use the custom 404 error page
-sudo sed -i '/listen 80 default_server;/a \\\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}' /etc/nginx/sites-enabled/default
-
-# Test Nginx configuration for syntax errors
-sudo nginx -t
+# Restart Nginx to apply the changes
+sudo service nginx restart
 
 # Restart Nginx to apply the changes
 sudo service nginx restart
