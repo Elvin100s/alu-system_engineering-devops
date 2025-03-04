@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 # Script that configures a new Ubuntu machine with the following requirements:
+# - Update the package list and install Nginx
+# - Allow Nginx HTTP traffic through the firewall
+# - Create a custom index.html file
+# - Configure Nginx to redirect /redirect_me to https://www.github.com/Elvin100s with a 301 Moved Permanently status
 
 # Update the package list and install Nginx
 sudo apt-get update
 sudo apt-get -y install nginx
 
 # Allow Nginx HTTP traffic through the firewall
-sudo ufw allow 'Nginx HTTP'
+if command -v ufw &> /dev/null; then
+    sudo ufw allow 'Nginx HTTP'
+else
+    echo "UFW is not installed or not available. Skipping UFW configuration."
+fi
 
 # Create a custom index.html file
 echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
 # Define the replacement string for the Nginx configuration
-string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
+string_for_replacement="server_name _;\\
+\\trewrite ^\\/redirect_me https:\\/\\/www.github.com\\/Elvin100s permanent;"
 
 # Use sed to replace the line in the Nginx default configuration file
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
-
-# Restart Nginx to apply the changes
-sudo service nginx restart
+sudo sed -i "s|server_name _;|$string_for_replacement|" /etc/nginx/sites-enabled/default
 
 # Restart Nginx to apply the changes
 sudo service nginx restart
