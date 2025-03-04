@@ -1,43 +1,15 @@
 #!/usr/bin/env bash
-# Configure Nginx server so that /redirect_me redirects to another page.
-
-# Ensure the script stops on any error
-set -e
+# Configure Nginx server to redirect /redirect_me with a 301 Moved Permanently status
 
 # Update package list and install Nginx
-apt-get update
-apt-get install -y nginx
+sudo apt-get update
+sudo apt-get install -y nginx
 
-# Remove the default Nginx configuration
-rm /etc/nginx/sites-enabled/default
-rm /etc/nginx/sites-available/default
-
-# Create a new Nginx configuration file
-cat > /etc/nginx/sites-available/default << EOL
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    
-    root /var/www/html;
-    index index.html index.htm index.nginx-debian.html;
-    
-    server_name _;
-    
-    location = /redirect_me {
-        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-    }
-    
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
-EOL
-
-# Create symlink to enable the site
-ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+# Modify the existing Nginx default configuration
+sudo sed -i '/server_name _;/a \    location = /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }' /etc/nginx/sites-available/default
 
 # Test Nginx configuration
-nginx -t
+sudo nginx -t
 
 # Restart Nginx to apply changes
-service nginx restart
+sudo systemctl restart nginx
