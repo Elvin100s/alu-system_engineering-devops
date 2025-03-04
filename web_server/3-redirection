@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine to redirect /redirect_me to another page with a 301 Moved Permanently status.
+# Script that configures a new Ubuntu machine to redirect /redirect_me to https://www.github.com/Elvin100s.
 
 # Update the package list and install Nginx
 sudo apt-get update
@@ -12,11 +12,22 @@ else
     echo "UFW is not installed or not available. Skipping UFW configuration."
 fi
 
+# Backup the original Nginx configuration file
+sudo cp /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.backup
+
 # Configure Nginx to redirect /redirect_me
 sudo sed -i '/^server {/,/^}/ {
-/^server {/a \
-    rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;
+    /^server {/a \
+    \trewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
 }' /etc/nginx/sites-enabled/default
 
-# Restart Nginx to apply the changes
-sudo service nginx restart
+# Test the Nginx configuration
+if sudo nginx -t; then
+    # Restart Nginx to apply the changes
+    sudo service nginx restart
+    echo "Nginx configuration updated successfully."
+else
+    # Restore the backup if the configuration is invalid
+    sudo cp /etc/nginx/sites-enabled/default.backup /etc/nginx/sites-enabled/default
+    echo "Nginx configuration is invalid. Restored the backup."
+fi
