@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-#Configures Nginx server to have a custom 404 page that contains the string
+# Script that configures a new Ubuntu machine to redirect /redirect_me to another page with a 301 Moved Permanently status.
 
+# Update the package list and install Nginx
 sudo apt-get update
 sudo apt-get -y install nginx
-sudo ufw allow 'Nginx HTTP'
-echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
-# codes to redirect a specific endpoint (eg: redirect /redirect_me to https://www.github.com/Emmanuel-kwizera)
-string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+# Allow Nginx HTTP traffic through the firewall
+if command -v ufw &> /dev/null; then
+    sudo ufw allow 'Nginx HTTP'
+else
+    echo "UFW is not installed or not available. Skipping UFW configuration."
+fi
 
-# codes to create error page and add a redirect for error 404
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html > /dev/null
-string_for_replacement="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
-sudo sed -i "s/listen 80 default_server;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+# Configure Nginx to redirect /redirect_me
+sudo sed -i '/^server {/,/^}/ {
+/^server {/a \
+    rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;
+}' /etc/nginx/sites-enabled/default
 
+# Restart Nginx to apply the changes
 sudo service nginx restart
