@@ -20,3 +20,16 @@ echo "<html>
 <p>ceci n'est pas</p>
 </body>
 </html>" | sudo tee /var/www/html/custom_404.html > /dev/null
+
+# Configure Nginx to use the custom 404 page and redirect /redirect_me
+sudo sed -i '/^server {/,/^}/ {
+/^server {/a \
+    error_page 404 /custom_404.html;\
+    location = /custom_404.html {\
+        internal;\
+    }\
+    rewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
+}' /etc/nginx/sites-enabled/default
+
+# Restart Nginx to apply the changes
+sudo service nginx restart
