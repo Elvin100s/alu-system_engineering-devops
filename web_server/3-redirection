@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine with a custom 404 page and /redirect_me redirection in Nginx.
+# Script that configures a new Ubuntu machine to redirect /redirect_me to https://www.github.com/Elvin100s.
 
 # Update the package list and install Nginx
 sudo apt-get update
@@ -12,23 +12,10 @@ else
     echo "UFW is not installed or not available. Skipping UFW configuration."
 fi
 
-# Create a custom 404 page
-echo "<html>
-<head><title>404 Not Found</title></head>
-<body>
-<h1>404 Not Found</h1>
-<p>ceci n'est pas</p>
-</body>
-</html>" | sudo tee /var/www/html/custom_404.html > /dev/null
-
-# Configure Nginx to use the custom 404 page and redirect /redirect_me
+# Configure Nginx to redirect /redirect_me
 sudo sed -i '/^server {/,/^}/ {
-/^server {/a \
-    error_page 404 /custom_404.html;\
-    location = /custom_404.html {\
-        internal;\
-    }\
-    rewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
+    /^server {/a \
+    \trewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
 }' /etc/nginx/sites-enabled/default
 
 # Restart Nginx to apply the changes
