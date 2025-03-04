@@ -21,11 +21,7 @@ echo "<html>
 </body>
 </html>" | sudo tee /var/www/html/custom_404.html > /dev/null
 
-# Set correct permissions for the custom 404 page
-sudo chmod 644 /var/www/html/custom_404.html
-sudo chown www-data:www-data /var/www/html/custom_404.html
-
-# Configure Nginx to use the custom 404 page and set up /redirect_me redirection
+# Configure Nginx to use the custom 404 page and redirect /redirect_me
 sudo sed -i '/^server {/,/^}/ {
     /^server {/a \
     \terror_page 404 /custom_404.html;\
