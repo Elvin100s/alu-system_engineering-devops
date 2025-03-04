@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine to have a custom 404 page in Nginx.
+# Script that configures a new Ubuntu machine with a custom 404 page and /redirect_me redirection in Nginx.
 
 # Update the package list and install Nginx
 sudo apt-get update
@@ -17,7 +17,7 @@ echo "<html>
 <head><title>404 Not Found</title></head>
 <body>
 <h1>404 Not Found</h1>
-<p>Get n set pss</p>
+<p>ceci n'est pas</p>
 </body>
 </html>" | sudo tee /var/www/html/custom_404.html > /dev/null
 
@@ -25,12 +25,15 @@ echo "<html>
 sudo chmod 644 /var/www/html/custom_404.html
 sudo chown www-data:www-data /var/www/html/custom_404.html
 
-# Configure Nginx to use the custom 404 page
-sudo sed -i '/^error_page 404 /d' /etc/nginx/sites-enabled/default
-echo "error_page 404 /custom_404.html;" | sudo tee -a /etc/nginx/sites-enabled/default > /dev/null
-echo "location = /custom_404.html {" | sudo tee -a /etc/nginx/sites-enabled/default > /dev/null
-echo "    internal;" | sudo tee -a /etc/nginx/sites-enabled/default > /dev/null
-echo "}" | sudo tee -a /etc/nginx/sites-enabled/default > /dev/null
+# Configure Nginx to use the custom 404 page and set up /redirect_me redirection
+sudo sed -i '/^server {/,/^}/ {
+    /^server {/a \
+    \terror_page 404 /custom_404.html;\
+    \tlocation = /custom_404.html {\
+    \t\tinternal;\
+    \t}\
+    \trewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
+}' /etc/nginx/sites-enabled/default
 
 # Restart Nginx to apply the changes
 sudo service nginx restart
