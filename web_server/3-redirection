@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine to redirect /redirect_me to https://www.github.com/Elvin100s.
+# This script configures a new Ubuntu machine to set up Nginx and redirect /redirect_me to https://www.youtube.com/watch?v=QH2-TGUlwu4 with a 301 Moved Permanently status.
 
-# Update the package list and install Nginx
+# Update package list and install nginx
 sudo apt-get update
-sudo apt-get -y install nginx
+sudo apt-get install -y nginx
 
-# Allow Nginx HTTP traffic through the firewall
-if command -v ufw &> /dev/null; then
-    sudo ufw allow 'Nginx HTTP'
-else
-    echo "UFW is not installed or not available. Skipping UFW configuration."
-fi
+# Backup the default Nginx configuration
+sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
 
-# Configure Nginx to redirect /redirect_me
-sudo sed -i '/^server {/,/^}/ {
-    /^server {/a \
-    \trewrite ^/redirect_me https://www.github.com/Elvin100s permanent;
-}' /etc/nginx/sites-enabled/default
+# Modify the Nginx configuration to include the redirect
+sudo sed -i '/^server {/a location = \/redirect_me {\n    return 301 https:\/\/www.youtube.com\/watch?v=QH2-TGUlwu4;\n}' /etc/nginx/sites-available/default
 
-# Restart Nginx to apply the changes
-sudo service nginx restart
+# Test the Nginx configuration
+sudo nginx -t
+
+# Reload Nginx to apply the changes
+sudo systemctl reload nginx
