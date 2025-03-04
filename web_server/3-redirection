@@ -1,68 +1,43 @@
 #!/usr/bin/env bash
-# This script configures a new Ubuntu machine to set up Nginx and redirect /redirect_me to YouTube with a 301 Moved Permanently status.
+# Configure Nginx server so that /redirect_me redirects to another page.
 
-# Exit on any error
+# Ensure the script stops on any error
 set -e
 
-# Function to log messages
-log() {
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
+# Update package list and install Nginx
+apt-get update
+apt-get install -y nginx
+
+# Remove the default Nginx configuration
+rm /etc/nginx/sites-enabled/default
+rm /etc/nginx/sites-available/default
+
+# Create a new Nginx configuration file
+cat > /etc/nginx/sites-available/default << EOL
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+    
+    server_name _;
+    
+    location = /redirect_me {
+        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
+    }
+    
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
 }
+EOL
 
-# Function to install shellcheck if not already installed
-install_shellcheck() {
-    if ! command -v shellcheck &> /dev/null; then
-        log "Installing shellcheck..."
-        sudo apt-get update
-        sudo apt-get install -y shellcheck
-    else
-        log "Shellcheck is already installed."
-    fi
-}
+# Create symlink to enable the site
+ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
-# Main script execution
-main() {
-    # Install shellcheck
-    install_shellcheck
+# Test Nginx configuration
+nginx -t
 
-    # Update and install Nginx
-    log "Updating package list and installing Nginx..."
-    sudo apt-get update
-    sudo apt-get install -y nginx
-
-    # Backup existing default configuration
-    if [ -f /etc/nginx/sites-available/default ]; then
-        log "Backing up existing Nginx default configuration..."
-        sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
-    fi
-
-    # Remove any existing redirect configuration to prevent duplicates
-    sudo sed -i '/location = \/redirect_me/,/}/d' /etc/nginx/sites-available/default
-
-    # Add redirect configuration
-    log "Configuring Nginx redirection..."
-    sudo sed -i '/^server {/a \    location = /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }' /etc/nginx/sites-available/default
-
-    # Ensure the default site is enabled
-    sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-    # Test Nginx configuration
-    log "Testing Nginx configuration..."
-    if sudo nginx -t; then
-        # Reload or start Nginx
-        if sudo systemctl is-active --quiet nginx; then
-            log "Reloading Nginx..."
-            sudo systemctl reload nginx
-        else
-            log "Starting Nginx..."
-            sudo systemctl start nginx
-        fi
-        log "Nginx configuration successful!"
-    else
-        log "Nginx configuration test failed. Please check the configuration file."
-        exit 1
-    fi
-}
-
-# Run the main function
-main
+# Restart Nginx to apply changes
+service nginx restart
