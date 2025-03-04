@@ -13,9 +13,22 @@ sudo ufw allow 'Nginx HTTP'
 # Create a simple HTML file with a message in the default Nginx root directory.
 echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
+# Backup the original Nginx configuration file.
+sudo cp /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak
+
 # Modify the Nginx configuration file to add a rewrite rule for the /redirect_me URL.
-string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
+string_for_replacement="server_name _;\n\trewrite ^/redirect_me https://www.github.com/Elvin100s permanent;"
 sudo sed -i "s/^server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
-# Restart Nginx to apply the changes made to the configuration file.
-sudo service nginx restart
+# Check the Nginx configuration for syntax errors.
+sudo nginx -t
+
+# If the configuration test fails, display the configuration file and error logs.
+if [ $? -ne 0 ]; then
+    echo "Nginx configuration test failed. Please check the configuration file and error logs."
+    sudo cat /etc/nginx/sites-enabled/default
+    sudo tail -f /var/log/nginx/error.log
+else
+    # Restart Nginx to apply the changes made to the configuration file.
+    sudo service nginx restart
+fi
