@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 # This script configures a new Ubuntu machine to set up Nginx and redirect /redirect_me to https://www.youtube.com/watch?v=QH2-TGUlwu4 with a 301 Moved Permanently status.
 
+# Function to install shellcheck if it is not already installed
+install_shellcheck() {
+    if ! command -v shellcheck &> /dev/null; then
+        echo "shellcheck could not be found, installing now..."
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+    else
+        echo "shellcheck is already installed."
+    fi
+}
+
+# Install shellcheck
+install_shellcheck
+
 # Update package list and install nginx
 sudo apt-get update
 sudo apt-get install -y nginx
@@ -10,9 +24,9 @@ sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.ba
 
 # Modify the Nginx configuration to include the redirect
 sudo sed -i '/^server {/a \
-    location = \/redirect_me {\n\
-        return 301 https:\/\/www.youtube.com\/watch?v=QH2-TGUlwu4;\n\
-    }' /etc/nginx/sites-available/default
+location = \/redirect_me {\
+    return 301 https:\/\/www.youtube.com\/watch?v=QH2-TGUlwu4;\
+}' /etc/nginx/sites-available/default
 
 # Ensure the default site is enabled
 sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
