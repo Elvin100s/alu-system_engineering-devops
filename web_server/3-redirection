@@ -9,10 +9,22 @@ sudo apt-get install -y nginx
 sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
 
 # Modify the Nginx configuration to include the redirect
-sudo sed -i '/^server {/a location = \/redirect_me {\n    return 301 https:\/\/www.youtube.com\/watch?v=QH2-TGUlwu4;\n}' /etc/nginx/sites-available/default
+sudo sed -i '/^server {/a \
+    location = \/redirect_me {\n\
+        return 301 https:\/\/www.youtube.com\/watch?v=QH2-TGUlwu4;\n\
+    }' /etc/nginx/sites-available/default
+
+# Ensure the default site is enabled
+sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
 # Test the Nginx configuration
-sudo nginx -t
-
-# Reload Nginx to apply the changes
-sudo systemctl reload nginx
+if sudo nginx -t; then
+    # Reload Nginx to apply the changes
+    if sudo systemctl is-active --quiet nginx; then
+        sudo systemctl reload nginx
+    else
+        sudo systemctl start nginx
+    fi
+else
+    echo "Nginx configuration test failed. Please check the configuration file."
+fi
