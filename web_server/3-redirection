@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine with the following requirements:
+# Script that configures a new Ubuntu machine with Nginx and sets up a basic homepage and redirect rule.
 
+# Update the package list to ensure you have the latest information about available packages.
 sudo apt-get update
+
+# Install Nginx without prompting for user confirmation.
 sudo apt-get -y install nginx
+
+# Allow HTTP traffic through the Uncomplicated Firewall (UFW) for Nginx.
 sudo ufw allow 'Nginx HTTP'
+
+# Create a simple HTML file with a message in the default Nginx root directory.
 echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
 
+# Modify the Nginx configuration file to add a rewrite rule for the /redirect_me URL.
 string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+sudo sed -i "s/^server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
+# Restart Nginx to apply the changes made to the configuration file.
 sudo service nginx restart
