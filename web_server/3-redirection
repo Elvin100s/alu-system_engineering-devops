@@ -22,6 +22,11 @@ sudo apt-get install -y nginx
 # Backup the default Nginx configuration
 sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup
 
+# Remove the backup file from sites-enabled if it exists
+if [ -f /etc/nginx/sites-enabled/default.backup ]; then
+    sudo rm /etc/nginx/sites-enabled/default.backup
+fi
+
 # Modify the Nginx configuration to include the redirect
 sudo sed -i '/^server {/a \
 location = \/redirect_me {\
@@ -29,7 +34,7 @@ location = \/redirect_me {\
 }' /etc/nginx/sites-available/default
 
 # Ensure the default site is enabled
-sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Test the Nginx configuration
 if sudo nginx -t; then
