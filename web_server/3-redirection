@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine with the following requirements:
+# bash script to install nginx web server & make the following configurations:
 
-sudo apt-get update
-sudo apt-get -y install nginx
-sudo ufw allow 'Nginx HTTP'
-echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
+apt-get update
+apt-get install -y nginx
 
-string_for_replacement="server_name _;\n\trewrite ^\/redirect_me https:\/\/www.github.com\/Elvin100s permanent;"
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+mkdir /etc/nginx/html
+
+touch /etc/nginx/html/index.html
+
+echo "Holberton School" > /etc/nginx/html/index.html
+printf %s "server {
+     listen      80 default_server;
+     listen      [::]:80 default_server;
+     root        /etc/nginx/html;
+     index       index.html index.htm;
+
+     location /redirect_me {
+        return 301 http://youtube.com/;
+    }
+}
+" > /etc/nginx/sites-available/default
+
 
 sudo service nginx restart
