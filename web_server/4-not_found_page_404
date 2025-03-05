@@ -1,30 +1,39 @@
 #!/usr/bin/env bash
-# Script that configures a new Ubuntu machine with the following requirements:
-# - Update the package list and install Nginx
-# - Allow Nginx HTTP traffic through the firewall
-# - Create a custom index.html file
-# - Configure Nginx to redirect /redirect_me to https://www.github.com/Elvin100s with a 301 Moved Permanently status
+# Configures a new ubuntu machine by installing
+# Nginx where it should be listening on port 80
+# Serve a page that would return a Hello World string
+#
 
-# Update the package list and install Nginx
-sudo apt-get update
-sudo apt-get -y install nginx
+echo -e "Updating and installing Nginx.\n"
+sudo apt-get update -y -qq && \
+	 sudo apt-get install nginx -y
 
-# Allow Nginx HTTP traffic through the firewall
-if command -v ufw &> /dev/null; then
-    sudo ufw allow 'Nginx HTTP'
-else
-    echo "UFW is not installed or not available. Skipping UFW configuration."
-fi
+echo -e "\nSetting up some minor stuff.\n"
 
-# Create a custom index.html file
-echo "This is Elvin from Holberton School :)" | sudo tee /var/www/html/index.html > /dev/null
+# starting nginx service
+sudo service nginx start
 
-# Define the replacement string for the Nginx configuration
-string_for_replacement="server_name _;\\
-\\trewrite ^\\/redirect_me https:\\/\\/www.github.com\\/Elvin100s permanent;"
+# allowing nginx on firewall
+sudo ufw allow 'Nginx HTTP'
 
-# Use sed to replace the line in the Nginx default configuration file
-sudo sed -i "s|server_name _;|$string_for_replacement|" /etc/nginx/sites-enabled/default
+# Give the user ownership to website files for easy editing
+sudo chown -R "$USER":"$USER" /var/www/html
+sudo chmod -R 755 /var/www
 
-# Restart Nginx to apply the changes
+# Backup default index
+cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
+
+# Creating new index
+echo -e "Holberton School" > /var/www/html/index.nginx-debian.html
+
+# Setting up /redirect_me to a youtube video
+sudo sed -i '24i\	rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;' /etc/nginx/sites-available/default
+
+# Set up a 404 page
+echo "Ceci n'est pas une page" >> /var/www/html/error_404.html
+sudo sed -i '25i\	error_page 404 /error_404.html;' /etc/nginx/sites-available/default
+
+# Restarting nginx
 sudo service nginx restart
+
+echo -e "\nCompleted.\n"
