@@ -13,7 +13,7 @@ frontend elvin100s.tech
 
 backend web_servers
         balance roundrobin
-        server 6536-web-01	35.174.4.60	running	
+        server 6536-web-01  35.174.4.60	
         server 6536-web-02  3.80.200.254
          
 ' >> /etc/haproxy/haproxy.cfg
