@@ -1,50 +1,36 @@
 #!/usr/bin/env bash
-# Install and configure HAProxy as a load balancer
+# Create a script to install and configure HAProxy on lb-01 server
+# Ensure servers are configured with the right hostnames: [STUDENT_ID]-web-01 and [STUDENT_ID]-web-02
 
 # Update package list and install HAProxy
-apt-get -y update
+sudo apt-get -y update
 apt-get -y install haproxy
 
-# Enable HAProxy to be started by init script
-echo "ENABLED=1" > /etc/default/haproxy
+# Set hostnames for web-01 and web-02
+# Replace [STUDENT_ID] with your actual student ID (e.g., 6536).
 
-# Configure HAProxy
-cat > /etc/haproxy/haproxy.cfg << EOF
-global
-    log /dev/log    local0
-    log /dev/log    local1 notice
-    chroot /var/lib/haproxy
-    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-    stats timeout 30s
-    user haproxy
-    group haproxy
-    daemon
+# Set hostname for web-01
+ssh ubuntu@35.174.4.60 "sudo hostnamectl set-hostname 6536-web-01"
 
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    timeout connect 5000
-    timeout client  50000
-    timeout server  50000
-    errorfile 400 /etc/haproxy/errors/400.http
-    errorfile 403 /etc/haproxy/errors/403.http
-    errorfile 408 /etc/haproxy/errors/408.http
-    errorfile 500 /etc/haproxy/errors/500.http
-    errorfile 502 /etc/haproxy/errors/502.http
-    errorfile 503 /etc/haproxy/errors/503.http
-    errorfile 504 /etc/haproxy/errors/504.http
+# Set hostname for web-02
+ssh ubuntu@34.230.45.161 "sudo hostnamectl set-hostname 6536-web-02"
 
+# Edit config file
+server_config=\
+"
 frontend http_front
-    bind *:80
-    default_backend http_back
-
+        bind *:80
+        mode http
+        default_backend http_back
 backend http_back
-    balance roundrobin
-    server 6536-web-01 35.174.4.60:80 check
-    server 6536-web-02 34.230.45.161:80 check
-EOF
+        balance roundrobin
+        server 6536-web-01 35.174.4.60:80 check
+        server 6536-web-02 34.230.45.161:80 check
+"
+echo "$server_config" | sudo tee -a /etc/haproxy/haproxy.cfg
 
-# Restart HAProxy service
-service haproxy restart
+# Enable HAProxy to be started by init script
+echo "ENABLED=1" | sudo tee -a /etc/default/haproxy
+
+# Restart HAProxy
+sudo service haproxy restart
