@@ -1,21 +1,14 @@
 #!/usr/bin/env bash
 # Create a script to install and configure HAProxy on lb-01 server
-# Ensure servers are configured with the right hostnames: [STUDENT_ID]-web-01 and [STUDENT_ID]-web-02
+# Configure HAProxy to send traffic to web-01 and web-02 servers
+# Distribute requests using a roundrobin algorithm
+# Make sure that HAProxy can be managed via an init script
 
 # Update package list and install HAProxy
 sudo apt-get -y update
 apt-get -y install haproxy
 
-# Set hostnames for web-01 and web-02
-# Replace [STUDENT_ID] with your actual student ID (e.g., 6536).
-
-# Set hostname for web-01
-ssh ubuntu@35.174.4.60 "sudo hostnamectl set-hostname 6536-web-01"
-
-# Set hostname for web-02
-ssh ubuntu@34.230.45.161 "sudo hostnamectl set-hostname 6536-web-02"
-
-# Edit config file
+# Edit HAProxy configuration file
 server_config=\
 "
 frontend http_front
