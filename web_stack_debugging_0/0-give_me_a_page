@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Start Apache and configure it to return "Hello Holberton"
+
+# Start Apache
+echo "Starting Apache..."
+sudo systemctl start apache2
+
+# Check if Apache started successfully
+if systemctl is-active --quiet apache2; then
+    echo "Apache is running."
+else
+    echo "Failed to start Apache."
+    echo "Check the Apache error logs for more details: /var/log/apache2/error.log"
+    exit 1
+fi
+
+# Create the index.html file with "Hello Holberton"
+echo "Hello Holberton" | sudo tee /var/www/html/index.html > /dev/null
+
+# Restart Apache to apply changes
+echo "Restarting Apache..."
+sudo systemctl restart apache2
+
+# Verify Apache is serving the correct content
+if curl -s http://localhost | grep -q "Hello Holberton"; then
+    echo "Apache is serving the correct content."
+else
+    echo "Failed to serve the correct content."
+    echo "Check the Apache error logs for more details: /var/log/apache2/error.log"
+    exit 1
+fi
