@@ -1,16 +1,2 @@
-#!/usr/bin/env bash
-# Start Apache and ensure it serves "Hello Holberton"
-
-# Create the "Hello Holberton" page
-echo "Hello Holberton" > /var/www/html/index.html
-
-# Start Apache
 service apache2 start
-
-# Ensure Apache is running
-if pgrep apache2 > /dev/null; then
-    echo "Apache is running and serving 'Hello Holberton'."
-else
-    echo "Failed to start Apache."
-    exit 1
-fi
+echo "Hello Holberton" > /var/www/html/index.html
