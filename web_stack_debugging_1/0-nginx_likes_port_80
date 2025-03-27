@@ -1,21 +1,11 @@
 #!/usr/bin/env bash
-# This script fixes the issue with Nginx not listening on port 80.
+# Minimal working version
 
-# Install Nginx if not already installed
-if ! command -v nginx &> /dev/null; then
-    apt-get update
-    apt-get install -y nginx
-fi
+# Ensure config is linked
+ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Ensure Nginx is configured to listen on port 80
-sed -i 's/listen .*/listen 80;/g' /etc/nginx/sites-available/default
+# Force IPv4 listening
+sed -i 's/listen \[::\]:80 default_server;/listen 80 default_server;/' /etc/nginx/sites-enabled/default
 
-# Restart Nginx to apply changes
-service nginx restart
-
-# Verify Nginx is running and listening on port 80
-if curl -s 0:80 > /dev/null; then
-    echo "Nginx is now listening on port 80."
-else
-    echo "Failed to fix Nginx configuration."
-fi
+# Restart Nginx
+nginx -s reload 2>/dev/null || nginx
