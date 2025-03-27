@@ -1,11 +1,37 @@
 #!/usr/bin/env bash
-# Minimal working version
+# Fixes Nginx duplicate listen directive and ensures proper port 80 configuration
 
-# Ensure config is linked
-ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+# Exit on error
+set -e
 
-# Force IPv4 listening
-sed -i 's/listen \[::\]:80 default_server;/listen 80 default_server;/' /etc/nginx/sites-enabled/default
+# Check if Nginx is installed
+if ! command -v nginx >/dev/null; then
+    apt-get update
+    apt-get install -y nginx
+fi
 
-# Restart Nginx
-nginx -s reload 2>/dev/null || nginx
+# Backup current config
+cp /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak 2>/dev/null || true
+
+# Clean up duplicate listen directives
+sed -i '/listen[[:space:]]*80;/d' /etc/nginx/sites-enabled/default
+sed -i '/listen[[:space:]]*\[::\]:80;/d' /etc/nginx/sites-enabled/default
+
+# Add single clean listen directive
+sed -i '/server {/a \    listen 80 default_server;' /etc/nginx/sites-enabled/default
+
+# Test configuration
+if nginx -t; then
+    # Restart Nginx (trying multiple methods)
+    if command -v systemctl >/dev/null; then
+        systemctl restart nginx
+    else
+        nginx -s stop 2>/dev/null || true
+        nginx
+    fi
+    echo "Nginx successfully configured on port 80"
+else
+    echo "Configuration test failed, restoring backup"
+    cp /etc/nginx/sites-enabled/default.bak /etc/nginx/sites-enabled/default
+    exit 1
+fi
