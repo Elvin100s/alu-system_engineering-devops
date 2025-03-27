@@ -1,28 +1,44 @@
 #!/usr/bin/env bash
-# Fixes Nginx duplicate listen directive and ensures proper port 80 configuration
+# Properly configures Nginx to listen on port 80 with correct symlink setup
 
-# Exit on error
+# Exit on any error
 set -e
 
-# Check if Nginx is installed
+# Install Nginx if not present
 if ! command -v nginx >/dev/null; then
     apt-get update
     apt-get install -y nginx
 fi
 
-# Backup current config
-cp /etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default.bak 2>/dev/null || true
+# Ensure sites-available/default exists
+if [ ! -f /etc/nginx/sites-available/default ]; then
+    mkdir -p /etc/nginx/sites-available
+    cat > /etc/nginx/sites-available/default <<'EOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    
+    root /var/www/html;
+    index index.html index.htm;
+    
+    server_name _;
+    
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+EOF
+fi
 
-# Clean up duplicate listen directives
-sed -i '/listen[[:space:]]*80;/d' /etc/nginx/sites-enabled/default
-sed -i '/listen[[:space:]]*\[::\]:80;/d' /etc/nginx/sites-enabled/default
+# Clean up sites-enabled directory
+rm -f /etc/nginx/sites-enabled/*
 
-# Add single clean listen directive
-sed -i '/server {/a \    listen 80 default_server;' /etc/nginx/sites-enabled/default
+# Create proper symlink
+ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Test configuration
+# Test the configuration
 if nginx -t; then
-    # Restart Nginx (trying multiple methods)
+    # Restart Nginx
     if command -v systemctl >/dev/null; then
         systemctl restart nginx
     else
@@ -31,7 +47,6 @@ if nginx -t; then
     fi
     echo "Nginx successfully configured on port 80"
 else
-    echo "Configuration test failed, restoring backup"
-    cp /etc/nginx/sites-enabled/default.bak /etc/nginx/sites-enabled/default
+    echo "Nginx configuration test failed"
     exit 1
 fi
