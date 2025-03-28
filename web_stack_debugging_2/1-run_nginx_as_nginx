@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Configures Nginx to run as nginx user on port 8080
+
+# Stop any running Nginx
+nginx -s stop 2>/dev/null || true
+pkill -9 nginx 2>/dev/null || true
+
+# Create nginx user if it doesn't exist
+id -u nginx &>/dev/null || useradd nginx
+
+# Configure Nginx to run as nginx user and listen on 8080
+cat > /etc/nginx/nginx.conf <<EOF
+user nginx;
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    server {
+        listen 8080;
+        listen [::]:8080;
+        
+        location / {
+            root /var/www/html;
+            index index.html;
+        }
+    }
+}
+EOF
+
+# Fix permissions
+chown -R nginx:nginx /var/log/nginx /var/cache/nginx
+chmod -R 755 /var/log/nginx
+
+# Start Nginx
+nginx
+
+# Verify
+ps aux | grep ngin[x]
+nc -z 0 8080; echo $?
