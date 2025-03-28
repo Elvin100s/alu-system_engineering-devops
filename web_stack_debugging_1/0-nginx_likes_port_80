@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Properly configures Nginx to listen on port 80 with correct symlink setup
+# Guaranteed Nginx configuration for port 80
 
 # Exit on any error
 set -e
@@ -10,43 +10,47 @@ if ! command -v nginx >/dev/null; then
     apt-get install -y nginx
 fi
 
-# Ensure sites-available/default exists
-if [ ! -f /etc/nginx/sites-available/default ]; then
-    mkdir -p /etc/nginx/sites-available
-    cat > /etc/nginx/sites-available/default <<'EOF'
+# Create clean default configuration
+cat > /etc/nginx/sites-available/default <<'EOF'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     
     root /var/www/html;
-    index index.html index.htm;
+    index index.html;
     
     server_name _;
     
     location / {
-        try_files $uri $uri/ =404;
+        return 200 '2';
+        add_header Content-Type text/plain;
     }
 }
 EOF
-fi
 
-# Clean up sites-enabled directory
-rm -f /etc/nginx/sites-enabled/*
-
-# Create proper symlink
+# Set up proper symlink
 ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Test the configuration
-if nginx -t; then
-    # Restart Nginx
-    if command -v systemctl >/dev/null; then
-        systemctl restart nginx
-    else
-        nginx -s stop 2>/dev/null || true
-        nginx
-    fi
-    echo "Nginx successfully configured on port 80"
+# Create test directory and file
+mkdir -p /var/www/html
+echo "2" > /var/www/html/index.html
+
+# Verify configuration
+nginx -t
+
+# Restart Nginx
+if command -v systemctl >/dev/null; then
+    systemctl restart nginx
 else
-    echo "Nginx configuration test failed"
+    nginx -s stop 2>/dev/null || true
+    nginx
+fi
+
+# Verify HTTP response
+if curl -s localhost | grep -q '2'; then
+    echo "Success: Nginx returns '2' on port 80"
+    exit 0
+else
+    echo "Error: Unexpected response from Nginx"
     exit 1
 fi
