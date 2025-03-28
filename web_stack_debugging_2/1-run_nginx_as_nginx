@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # Configures Nginx to run as nginx user on port 8080
 
-# Stop any running Nginx
+# 1. Stop any running Nginx and free port 8080
 nginx -s stop 2>/dev/null || true
 pkill -9 nginx 2>/dev/null || true
+fuser -k 8080/tcp 2>/dev/null || true
 
-# Create nginx user if it doesn't exist
-id -u nginx &>/dev/null || useradd nginx
+# 2. Create required directories
+mkdir -p /var/cache/nginx /var/log/nginx /var/www/html
+echo "Nginx is working" > /var/www/html/index.html
 
-# Configure Nginx to run as nginx user and listen on 8080
+# 3. Create nginx user if it doesn't exist
+id -u nginx &>/dev/null || useradd --system --no-create-home nginx
+
+# 4. Configure Nginx
 cat > /etc/nginx/nginx.conf <<EOF
 user nginx;
 worker_processes auto;
@@ -21,10 +26,13 @@ events {
 http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
-
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+    
     server {
         listen 8080;
         listen [::]:8080;
+        server_name localhost;
         
         location / {
             root /var/www/html;
@@ -34,13 +42,19 @@ http {
 }
 EOF
 
-# Fix permissions
-chown -R nginx:nginx /var/log/nginx /var/cache/nginx
-chmod -R 755 /var/log/nginx
+# 5. Set proper permissions
+chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/www/html
+chmod -R 755 /var/cache/nginx /var/log/nginx /var/www/html
 
-# Start Nginx
-nginx
+# 6. Start Nginx
+nginx -t && nginx
 
-# Verify
+# 7. Verification
+echo -e "\n=== Nginx processes ==="
 ps aux | grep ngin[x]
-nc -z 0 8080; echo $?
+
+echo -e "\n=== Port check ==="
+netstat -tulnp | grep 8080 || ss -tulnp | grep 8080
+
+echo -e "\n=== HTTP check ==="
+curl -s localhost:8080
