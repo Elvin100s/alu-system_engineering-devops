@@ -11,10 +11,12 @@ mkdir -p /var/cache/nginx /var/log/nginx /var/www/html
 echo "Nginx is working" > /var/www/html/index.html
 
 # 3. Create nginx user if it doesn't exist
-id -u nginx &>/dev/null || useradd --system --no-create-home nginx
+if ! id -u nginx &>/dev/null; then
+    useradd --system --no-create-home nginx
+fi
 
 # 4. Configure Nginx
-cat > /etc/nginx/nginx.conf <<EOF
+cat > /etc/nginx/nginx.conf <<'EOF'
 user nginx;
 worker_processes auto;
 pid /run/nginx.pid;
@@ -47,14 +49,35 @@ chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/www/html
 chmod -R 755 /var/cache/nginx /var/log/nginx /var/www/html
 
 # 6. Start Nginx
-nginx -t && nginx
+if nginx -t; then
+    nginx
+else
+    echo "Nginx configuration test failed" >&2
+    exit 1
+fi
 
 # 7. Verification
-echo -e "\n=== Nginx processes ==="
-ps aux | grep ngin[x]
+echo -e "\n=== Verification ==="
+echo "1. Process check:"
+if pgrep -u nginx nginx >/dev/null; then
+    echo "✓ Nginx is running as nginx user"
+else
+    echo "✗ Nginx is NOT running as nginx user" >&2
+    exit 1
+fi
 
-echo -e "\n=== Port check ==="
-netstat -tulnp | grep 8080 || ss -tulnp | grep 8080
+echo "2. Port check:"
+if ss -tulnp | grep -q ':8080'; then
+    echo "✓ Nginx is listening on port 8080"
+else
+    echo "✗ Nginx is NOT listening on port 8080" >&2
+    exit 1
+fi
 
-echo -e "\n=== HTTP check ==="
-curl -s localhost:8080
+echo "3. HTTP check:"
+if curl -s localhost:8080 | grep -q "Nginx is working"; then
+    echo "✓ Nginx is serving content correctly"
+else
+    echo "✗ Nginx is NOT serving content correctly" >&2
+    exit 1
+fi
